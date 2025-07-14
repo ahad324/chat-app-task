@@ -13,13 +13,12 @@ export interface Message {
     content: string;
     chat: Chat;
     isDeleted?: boolean;
+    updatedAt: string;
 }
 
 export interface Chat {
     _id: string;
-    chatName: string;
-    isGroupChat: boolean;
     users: User[];
     latestMessage?: Message;
-    groupAdmin?: User;
+    updatedAt: string;
 }

@@ -1,4 +1,5 @@
 
+
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { ChatState } from '../context/ChatProvider';
@@ -34,6 +35,28 @@ const SingleChat = () => {
       setLoading(false);
     }
   };
+
+  const updateAndSortChats = (updatedMessage: Message) => {
+    setChats(prevChats => {
+      // The server response for a new/updated message (`updatedMessage`) contains the message data
+      // and a `chat` object. However, inside that `chat` object, the `latestMessage.sender`
+      // field is not populated, which causes a crash in the `MyChats` component.
+      // To fix this, we construct a new chat object for the list. We use the `chat` object
+      // from the message, but overwrite its `latestMessage` property with the full `updatedMessage`
+      // object we received, because `updatedMessage.sender` *is* populated.
+      const updatedChatForList = {
+        ...updatedMessage.chat,
+        latestMessage: updatedMessage,
+      };
+
+      const newChats = prevChats.map(chat =>
+        chat._id === updatedChatForList._id ? updatedChatForList : chat
+      );
+
+      // Sort by the `updatedAt` field to bring the most recently active chat to the top.
+      return newChats.sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
+    });
+  };
   
   useEffect(() => {
     fetchMessages();
@@ -43,29 +66,41 @@ const SingleChat = () => {
   }, [selectedChat]);
 
   useEffect(() => {
+    if (!socket) return;
+
     if (latestMessage && latestMessage.chat._id === selectedChat?._id) {
        setMessages(prevMessages => {
          const messageExists = prevMessages.find(m => m._id === latestMessage._id);
          if (messageExists) {
-           // It's an update (edit or delete)
            return prevMessages.map(m => m._id === latestMessage._id ? latestMessage : m);
          } else {
-           // It's a new message
            return [...prevMessages, latestMessage];
          }
        });
     }
 
+    const messageUpdateHandler = (updatedMessage: Message) => {
+        // Update the messages list if the updated message belongs to the currently selected chat
+        if (selectedChat?._id === updatedMessage.chat._id) {
+            setMessages(prev => prev.map(msg => msg._id === updatedMessage._id ? updatedMessage : msg));
+        }
+        // Update the main chat list on the side
+        updateAndSortChats(updatedMessage);
+    };
+    socket.on('update message', messageUpdateHandler);
+
     const typingHandler = () => setIsTyping(true);
     const stopTypingHandler = () => setIsTyping(false);
     
-    socket?.on('typing', typingHandler);
-    socket?.on('stop typing', stopTypingHandler);
+    socket.on('typing', typingHandler);
+    socket.on('stop typing', stopTypingHandler);
 
     return () => {
-      socket?.off('typing', typingHandler);
-      socket?.off('stop typing', stopTypingHandler);
+      socket.off('update message', messageUpdateHandler);
+      socket.off('typing', typingHandler);
+      socket.off('stop typing', stopTypingHandler);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [latestMessage, selectedChat, socket]);
 
   const handleSendMessage = async () => {
@@ -77,19 +112,8 @@ const SingleChat = () => {
         const { data } = await axios.post(`${ENDPOINT}/api/message`, { content: newMessage, chatId: selectedChat?._id }, config);
         setNewMessage('');
         socket.emit('new message', data);
-        setMessages(prev => [...prev, data]); // Optimistic update for sender
-
-        // Optimistically update the chats list for the sender for instant feedback
-        setChats(prevChats => {
-            const chatToUpdate = prevChats.find(c => c._id === data.chat._id);
-            if(chatToUpdate) {
-                const updatedChat = { ...chatToUpdate, latestMessage: data };
-                const otherChats = prevChats.filter(c => c._id !== data.chat._id);
-                return [updatedChat, ...otherChats];
-            }
-            return prevChats;
-        });
-
+        setMessages(prev => [...prev, data]);
+        updateAndSortChats(data);
       } catch (error) {
         alert('Error Occurred! Failed to send the Message');
       } finally {
@@ -104,10 +128,11 @@ const SingleChat = () => {
     setIsSending(true);
     try {
         const config = { headers: { 'Content-type': 'application/json', Authorization: `Bearer ${user?.token}` } };
-        const { data } = await axios.put(`${ENDPOINT}/api/message/${editingMessage._id}`, { content: newMessage }, config);
+        const { data } = await axios.put<Message>(`${ENDPOINT}/api/message/${editingMessage._id}`, { content: newMessage }, config);
         socket.emit('update message', data);
+        setMessages(prev => prev.map(msg => msg._id === data._id ? data : msg));
+        updateAndSortChats(data);
         handleCancelEdit();
-        setMessages(prev => prev.map(msg => msg._id === data._id ? data : msg)); // Optimistic update
     } catch (error) {
         alert('Failed to update message');
     } finally {
@@ -119,9 +144,10 @@ const SingleChat = () => {
     if(!window.confirm("Are you sure you want to delete this message? This cannot be undone.") || !socket) return;
     try {
         const config = { headers: { Authorization: `Bearer ${user?.token}` } };
-        const { data } = await axios.delete(`${ENDPOINT}/api/message/${messageId}`, config);
-        socket.emit('update message', data); // Soft delete is an update
-        setMessages(prev => prev.map(msg => msg._id === data._id ? data : msg)); // Optimistic update
+        const { data } = await axios.delete<Message>(`${ENDPOINT}/api/message/${messageId}`, config);
+        socket.emit('update message', data);
+        setMessages(prev => prev.map(msg => msg._id === data._id ? data : msg));
+        updateAndSortChats(data);
     } catch (error) {
         alert('Failed to delete message');
     }
@@ -177,17 +203,13 @@ const SingleChat = () => {
             <button className="md:hidden" onClick={() => setSelectedChat(null)}>
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
             </button>
-            {!selectedChat?.isGroupChat && otherUser ? (
+            {otherUser && (
                 <ProfileModal user={otherUser}>
                     <div className="flex items-center space-x-3 cursor-pointer p-1 rounded-md hover:bg-gray-200 dark:hover:bg-slate-600">
                         <img src={otherUser.pic} alt={otherUser.name} className="w-8 h-8 rounded-full object-cover" />
                         <span className="font-semibold text-base">{otherUser.name}</span>
                     </div>
                 </ProfileModal>
-            ) : (
-                <div className="flex items-center space-x-3 p-1">
-                    <span className="font-semibold text-base">{selectedChat?.chatName.toUpperCase()}</span>
-                </div>
             )}
         </div>
       </div>
