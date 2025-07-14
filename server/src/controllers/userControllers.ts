@@ -105,14 +105,17 @@ const authUser = asyncHandler(async (req, res) => {
 });
 
 const allUsers = asyncHandler(async (req, res) => {
-    const keyword = req.query.search ? {
-        $or: [
-            { name: { $regex: req.query.search as string, $options: "i" } },
-            { email: { $regex: req.query.search as string, $options: "i" } },
-        ]
-    } : {};
+    const query: any = { _id: { $ne: (req as any).user._id } };
+    const searchKeyword = req.query.search as string;
 
-    const users = await User.find(keyword).find({ _id: { $ne: (req as any).user._id } });
+    if (searchKeyword && searchKeyword.trim() !== '') {
+        query.$or = [
+            { name: { $regex: searchKeyword, $options: "i" } },
+            { email: { $regex: searchKeyword, $options: "i" } },
+        ];
+    }
+    
+    const users = await User.find(query);
     res.send(users);
 });
 

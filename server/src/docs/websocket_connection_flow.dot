@@ -1,0 +1,39 @@
+digraph WebSocketConnectionFlow {
+    rankdir=LR;
+    node [shape=box, style="rounded,filled", fillcolor="#e6f3ff", fontname="Arial", fontsize=12];
+    edge [color="#3b82f6", fontname="Arial", fontsize=10];
+
+    Client [label="Client\n(React Frontend)"];
+    SocketIO [label="Socket.io\nClient", fillcolor="#dbeafe"];
+    Server [label="Backend Server\n(Node.js + Socket.io)", fillcolor="#bfdbfe"];
+    MongoDB [label="MongoDB\nDatabase", fillcolor="#a3e635"];
+
+    Client -> SocketIO [label="Initiates Connection"];
+    SocketIO -> Server [label="WebSocket Connection\n(ws://endpoint)"];
+    Server -> SocketIO [label="Connection Established\n(pingTimeout: 60000ms)"];
+    
+    SocketIO -> Server [label="Emit: setup(userData)"];
+    Server -> SocketIO [label="Emit: connected"];
+    
+    SocketIO -> Server [label="Emit: join chat(room)"];
+    Server -> SocketIO [label="User Joins Room"];
+    
+    SocketIO -> Server [label="Emit: new message"];
+    Server -> MongoDB [label="Save Message"];
+    MongoDB -> Server [label="Return Saved Message"];
+    Server -> SocketIO [label="Emit: message received"];
+    
+    SocketIO -> Server [label="Emit: update message"];
+    Server -> MongoDB [label="Update Message"];
+    MongoDB -> Server [label="Return Updated Message"];
+    Server -> SocketIO [label="Emit: message updated"];
+    
+    SocketIO -> Server [label="Emit: typing"];
+    Server -> SocketIO [label="Broadcast: typing"];
+    
+    SocketIO -> Server [label="Emit: stop typing"];
+    Server -> SocketIO [label="Broadcast: stop typing"];
+    
+    SocketIO -> Server [label="Disconnect"];
+    Server -> SocketIO [label="Log: USER DISCONNECTED"];
+}

@@ -1,0 +1,34 @@
+digraph RealTimeEventSequence {
+    rankdir=TB;
+    node [shape=box, style="rounded,filled", fillcolor="#e6f3ff", fontname="Arial", fontsize=12];
+    edge [color="#3b82f6", fontname="Arial", fontsize=10];
+
+    User1 [label="User 1\n(Frontend)"];
+    User2 [label="User 2\n(Frontend)"];
+    Server [label="Server\n(Socket.io)", fillcolor="#bfdbfe"];
+    MongoDB [label="MongoDB", fillcolor="#a3e635"];
+
+    User1 -> Server [label="Connect\n(setup: user._id)"];
+    Server -> User1 [label="connected"];
+    
+    User1 -> Server [label="join chat(chatId)"];
+    User2 -> Server [label="join chat(chatId)"];
+    
+    User1 -> Server [label="typing(chatId)"];
+    Server -> User2 [label="typing"];
+    
+    User1 -> Server [label="stop typing(chatId)"];
+    Server -> User2 [label="stop typing"];
+    
+    User1 -> Server [label="new message\n(content, chatId)"];
+    Server -> MongoDB [label="Save Message"];
+    MongoDB -> Server [label="Saved Message"];
+    Server -> User1 [label="message received"];
+    Server -> User2 [label="message received"];
+    
+    User1 -> Server [label="update message\n(messageId, content)"];
+    Server -> MongoDB [label="Update Message"];
+    MongoDB -> Server [label="Updated Message"];
+    Server -> User1 [label="message updated"];
+    Server -> User2 [label="message updated"];
+}

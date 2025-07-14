@@ -1,0 +1,36 @@
+digraph SystemArchitecture {
+    rankdir=TB;
+    node [shape=box, style="rounded,filled", fillcolor="#e6f3ff", fontname="Arial", fontsize=12];
+    edge [color="#3b82f6", fontname="Arial", fontsize=10];
+
+    subgraph cluster_frontend {
+        label="Frontend (React)";
+        style=filled;
+        fillcolor="#f0f9ff";
+        Client [label="React App\n(Vite, TypeScript)"];
+        SocketIOClient [label="Socket.io Client", fillcolor="#dbeafe"];
+    }
+
+    subgraph cluster_backend {
+        label="Backend (Node.js)";
+        style=filled;
+        fillcolor="#eff6ff";
+        Express [label="Express Server\n(REST API)", fillcolor="#bfdbfe"];
+        SocketIOServer [label="Socket.io Server", fillcolor="#bfdbfe"];
+        MongoDB [label="MongoDB\n(Database)", fillcolor="#a3e635"];
+    }
+
+    subgraph cluster_cloud {
+        label="Cloud Services";
+        style=filled;
+        fillcolor="#f0fdf4";
+        Cloudinary [label="Cloudinary\n(Image Storage)", fillcolor="#86efac"];
+    }
+
+    Client -> Express [label="HTTP Requests\n(axios)"];
+    Client -> SocketIOClient [label="WebSocket Events"];
+    SocketIOClient -> SocketIOServer [label="WebSocket\n(setup, join chat, messages)"];
+    Express -> MongoDB [label="CRUD Operations\n(Mongoose)"];
+    SocketIOServer -> MongoDB [label="Message Storage"];
+    Express -> Cloudinary [label="Profile Picture Upload"];
+}

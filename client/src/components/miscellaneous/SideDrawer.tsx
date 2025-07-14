@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
@@ -16,7 +17,7 @@ const SideDrawer = () => {
 
     const { user, setSelectedChat, chats, setChats } = ChatState();
     const navigate = useNavigate();
-    const serverUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+    const serverUrl = (import.meta as any).env.VITE_API_URL || 'http://localhost:3000';
 
     const logoutHandler = () => {
         localStorage.removeItem('userInfo');
@@ -24,10 +25,6 @@ const SideDrawer = () => {
     };
 
     const handleSearch = async () => {
-        if (!search) {
-            alert('Please enter something in search');
-            return;
-        }
         try {
             setLoading(true);
             const config = {
