@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import axios, { AxiosError } from 'axios';
 import { useNavigate } from 'react-router-dom';
+import Spinner from "../miscellaneous/Spinner"
 
 const Login = () => {
     const [email, setEmail] = useState('');
@@ -42,7 +43,7 @@ const Login = () => {
 
     return (
         <form onSubmit={submitHandler} className="flex flex-col space-y-4 pt-4">
-             {error && <div className="p-3 bg-red-200 text-red-800 rounded-md">{error}</div>}
+            {error && <div className="p-3 bg-red-200 text-red-800 rounded-md">{error}</div>}
             <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Email Address</label>
                 <input
@@ -70,7 +71,7 @@ const Login = () => {
                 className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
                 disabled={loading}
             >
-                {loading ? 'Logging in...' : 'Login'}
+                {loading ?  <Spinner size="sm" color="text-white" /> : 'Login'}
             </button>
         </form>
     );

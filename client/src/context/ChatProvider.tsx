@@ -1,8 +1,8 @@
-
 import React, { createContext, useContext, useState, useEffect, Dispatch, SetStateAction } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { User, Chat, Message } from '../types';
 import io, { Socket } from 'socket.io-client';
+import Spinner from '../components/miscellaneous/Spinner';
 
 const ENDPOINT = (import.meta as any).env.VITE_API_URL || 'http://localhost:3000';
 
@@ -28,15 +28,25 @@ const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => 
     const [notification, setNotification] = useState<Message[]>([]);
     const [socket, setSocket] = useState<Socket | null>(null);
     const [latestMessage, setLatestMessage] = useState<Message | null>(null);
+    const [authLoading, setAuthLoading] = useState(true);
 
     const navigate = useNavigate();
 
     useEffect(() => {
-        const userInfo = JSON.parse(localStorage.getItem('userInfo') || 'null');
-        setUser(userInfo);
+        try {
+            const userInfo = JSON.parse(localStorage.getItem('userInfo') || 'null');
+            setUser(userInfo);
 
-        if (!userInfo) {
+            if (!userInfo) {
+                navigate('/');
+            }
+        } catch (error) {
+            console.error("Failed to parse user info from localStorage", error);
+            localStorage.removeItem('userInfo');
+            setUser(null);
             navigate('/');
+        } finally {
+            setAuthLoading(false);
         }
     }, [navigate]);
 
@@ -92,6 +102,14 @@ const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => 
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [user]); 
+
+    if (authLoading) {
+        return (
+            <div className="flex h-screen w-screen items-center justify-center bg-gray-100 dark:bg-slate-900">
+                <Spinner size="lg" color="text-blue-500 dark:text-blue-400" />
+            </div>
+        );
+    }
 
 
     return (

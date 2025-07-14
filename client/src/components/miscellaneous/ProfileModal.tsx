@@ -4,6 +4,7 @@ import axios, { AxiosError } from 'axios';
 import { Dialog, Transition } from '@headlessui/react';
 import { User } from '../../types';
 import { ChatState } from '../../context/ChatProvider';
+import Spinner from "./Spinner"
 
 interface ProfileModalProps {
     user: User | null;
@@ -134,7 +135,7 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ user: initialUser, children
                                                     disabled={loading}
                                                     className="w-full mt-2 inline-flex justify-center rounded-md border border-transparent bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-green-500 focus-visible:ring-offset-2 disabled:bg-green-300 disabled:cursor-not-allowed"
                                                 >
-                                                    {loading ? 'Uploading...' : 'Confirm Upload'}
+                                                    {loading ? <Spinner size="sm" color="text-white" /> : 'Confirm Upload'}
                                                 </button>
                                             }
                                         </div>
