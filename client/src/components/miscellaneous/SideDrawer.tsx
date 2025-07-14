@@ -5,6 +5,7 @@ import { ChatState } from '../../context/ChatProvider';
 import ProfileModal from './ProfileModal';
 import UserListItem from '../UserAvatar/UserListItem';
 import { User } from '../../types';
+import Spinner from "./Spinner"
 
 const SideDrawer = () => {
     const [search, setSearch] = useState('');
@@ -103,7 +104,7 @@ const SideDrawer = () => {
                         <button onClick={handleSearch} className="ml-2 px-4 py-2 bg-blue-600 text-white rounded-md">Go</button>
                     </div>
                     {loading ? (
-                        <div>Loading...</div>
+                        <Spinner size="md" color="text-blue-500 dark:text-blue-400" />
                     ) : (
                         searchResult?.map((u) => (
                             <UserListItem
@@ -113,7 +114,7 @@ const SideDrawer = () => {
                             />
                         ))
                     )}
-                    {loadingChat && <div>Loading chat...</div>}
+                    {loadingChat && <Spinner size="md" color="text-blue-500 dark:text-blue-400" />}
                 </div>
             </div>
              {isDrawerOpen && <div onClick={() => setIsDrawerOpen(false)} className="bg-gray-900 bg-opacity-50 dark:bg-opacity-80 fixed inset-0 z-30"></div>}

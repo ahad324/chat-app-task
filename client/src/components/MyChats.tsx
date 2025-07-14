@@ -3,6 +3,7 @@ import axios from 'axios';
 import { ChatState } from '../context/ChatProvider';
 import { getSenderFull } from '../config/chatLogics';
 import { User, Chat } from '../types';
+import Spinner from "./miscellaneous/Spinner"
 
 const MyChats = () => {
     const { user, selectedChat, setSelectedChat, chats, setChats } = ChatState();
@@ -74,7 +75,7 @@ const MyChats = () => {
                         })}
                     </div>
                 ) : (
-                    <div>Loading chats...</div>
+                    <Spinner size="lg" color="text-blue-500 dark:text-blue-400" />
                 )}
             </div>
         </div>

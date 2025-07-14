@@ -1,4 +1,3 @@
-
 import React, { Fragment } from 'react';
 import ScrollableFeed from 'react-scrollable-feed';
 import { Menu, Transition } from '@headlessui/react';
@@ -35,7 +34,7 @@ const MessageMenu = ({ onEdit, onDelete }: { onEdit: () => void; onDelete: () =>
             leaveFrom="transform opacity-100 scale-100"
             leaveTo="transform opacity-0 scale-95"
         >
-            <Menu.Items className="absolute right-0 z-10 mt-2 w-32 origin-top-right rounded-md bg-white dark:bg-slate-800 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
+            <Menu.Items className="absolute bottom-full right-0 mb-1 z-20 w-32 origin-bottom-right rounded-md bg-white dark:bg-slate-800 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
                 <div className="px-1 py-1">
                     <Menu.Item>
                         {({ active }) => (
@@ -64,7 +63,7 @@ const ScrollableChat = ({ messages, onEdit, onDelete }: ScrollableChatProps) => 
     <ScrollableFeed>
       {messages &&
         messages.map((m, i) => (
-          <div style={{ display: 'flex' }} key={m._id} className="group items-end">
+          <div style={{ display: 'flex' }} key={m._id} className="group items-end my-1">
             {(isSameSender(messages, m, i, user?._id || '') ||
               isLastMessage(messages, i, user?._id || '')) && (
                  <img
@@ -75,21 +74,17 @@ const ScrollableChat = ({ messages, onEdit, onDelete }: ScrollableChatProps) => 
             )}
              <div className={`flex items-center ${m.sender._id === user?._id ? 'ml-auto' : ''} min-w-0`}>
                 <span
-                style={{
-                    display: 'inline-block',
-                    backgroundColor: `${
-                    m.sender._id === user?._id ? '#BEE3F8' : '#B9F5D0'
-                    }`,
-                    marginLeft: isSameSenderMargin(messages, m, i, user?._id || ''),
-                    marginTop: isSameUser(messages, m, i) ? 3 : 10,
-                    borderRadius: '20px',
-                    padding: '5px 15px',
-                    maxWidth: '75%',
-                    color: 'black'
-                }}
-                className="break-all"
+                    style={{
+                        backgroundColor: `${
+                        m.sender._id === user?._id ? '#BFDBFE' : '#F0F0F0'
+                        }`,
+                        color: `${
+                        m.sender._id === user?._id ? '#1E40AF' : '#1F2937'
+                        }`,
+                    }}
+                    className={`dark:bg-slate-700 dark:text-gray-200 inline-block ml-[${isSameSenderMargin(messages, m, i, user?._id || '')}px] mt-${isSameUser(messages, m, i) ? '1' : '2'} rounded-xl px-3 py-2 max-w-xs md:max-w-md break-words`}
                 >
-                {m.isDeleted ? <i className="text-gray-500">This message was deleted</i> : m.content}
+                {m.isDeleted ? <i className="text-gray-500 dark:text-gray-400">This message was deleted</i> : m.content}
                 </span>
 
                  {m.sender._id === user?._id && !m.isDeleted && (

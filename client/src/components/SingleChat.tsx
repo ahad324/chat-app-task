@@ -1,5 +1,3 @@
-
-
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { ChatState } from '../context/ChatProvider';
@@ -7,6 +5,8 @@ import { getSenderFull } from '../config/chatLogics';
 import ProfileModal from './miscellaneous/ProfileModal';
 import ScrollableChat from './ScrollableChat';
 import { Message } from '../types';
+import ConfirmationModal from './miscellaneous/ConfirmationModal';
+import Spinner from "./miscellaneous/Spinner"
 
 const ENDPOINT = (import.meta as any).env.VITE_API_URL || 'http://localhost:3000';
 
@@ -18,6 +18,10 @@ const SingleChat = () => {
   const [istyping, setIsTyping] = useState(false);
   const [isSending, setIsSending] = useState(false);
   const [editingMessage, setEditingMessage] = useState<Message | null>(null);
+
+  // State for confirmation modal
+  const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
+  const [messageIdToDelete, setMessageIdToDelete] = useState<string | null>(null);
 
   const { selectedChat, setSelectedChat, user, socket, latestMessage, setChats } = ChatState();
 
@@ -140,16 +144,24 @@ const SingleChat = () => {
     }
   }
 
-  const handleDeleteMessage = async (messageId: string) => {
-    if(!window.confirm("Are you sure you want to delete this message? This cannot be undone.") || !socket) return;
+  const requestDeleteConfirmation = (messageId: string) => {
+    setMessageIdToDelete(messageId);
+    setIsConfirmModalOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    if(!messageIdToDelete || !socket) return;
     try {
         const config = { headers: { Authorization: `Bearer ${user?.token}` } };
-        const { data } = await axios.delete<Message>(`${ENDPOINT}/api/message/${messageId}`, config);
+        const { data } = await axios.delete<Message>(`${ENDPOINT}/api/message/${messageIdToDelete}`, config);
         socket.emit('update message', data);
         setMessages(prev => prev.map(msg => msg._id === data._id ? data : msg));
         updateAndSortChats(data);
     } catch (error) {
         alert('Failed to delete message');
+    } finally {
+        setIsConfirmModalOpen(false);
+        setMessageIdToDelete(null);
     }
   }
 
@@ -215,10 +227,10 @@ const SingleChat = () => {
       </div>
       <div className="flex flex-col justify-end p-3 bg-gray-200 dark:bg-slate-900 w-full h-full rounded-b-lg overflow-y-hidden">
         {loading ? (
-          <div className="self-center">Loading...</div>
+          <Spinner size="lg" color="text-blue-500 dark:text-blue-400" />
         ) : (
           <div className="flex flex-col overflow-y-auto overflow-x-hidden custom-scrollbar">
-            <ScrollableChat messages={messages} onEdit={handleStartEdit} onDelete={handleDeleteMessage} />
+            <ScrollableChat messages={messages} onEdit={handleStartEdit} onDelete={requestDeleteConfirmation} />
           </div>
         )}
         <div className="mt-3">
@@ -257,6 +269,16 @@ const SingleChat = () => {
           </div>
         </div>
       </div>
+      <ConfirmationModal
+          isOpen={isConfirmModalOpen}
+          onClose={() => setIsConfirmModalOpen(false)}
+          onConfirm={confirmDelete}
+          title="Delete Message"
+          confirmText="Delete"
+          confirmButtonColor="bg-red-600 hover:bg-red-700 focus:ring-red-500"
+      >
+          <p>Are you sure you want to delete this message? This action cannot be undone.</p>
+      </ConfirmationModal>
     </>
   );
 };
