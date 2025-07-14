@@ -1,0 +1,84 @@
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
+import { ChatState } from '../context/ChatProvider';
+import { getSenderFull } from '../config/chatLogics';
+import { User } from '../types';
+
+const MyChats = () => {
+    const { user, selectedChat, setSelectedChat, chats, setChats } = ChatState();
+    const [loggedUser, setLoggedUser] = useState<User | null>(null);
+    const serverUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+
+    const fetchChats = async () => {
+        if (!user) return;
+        try {
+            const config = {
+                headers: {
+                    Authorization: `Bearer ${user.token}`,
+                },
+            };
+            const { data } = await axios.get(`${serverUrl}/api/chat`, config);
+            setChats(data);
+        } catch (error) {
+            alert('Error Occurred! Failed to load the chats');
+        }
+    };
+
+    useEffect(() => {
+        const userInfo = localStorage.getItem('userInfo');
+        if(userInfo) {
+            setLoggedUser(JSON.parse(userInfo));
+        }
+        fetchChats();
+    }, [user]);
+
+    return (
+        <div className={`flex-col items-center p-3 bg-white dark:bg-slate-800 w-full md:w-1/3 rounded-lg border dark:border-slate-700 ${selectedChat ? 'hidden md:flex' : 'flex'}`}>
+            <div className="pb-3 px-3 text-2xl md:text-3xl font-work-sans flex w-full justify-between items-center">
+                My Chats
+                {/* Group Chat Button can be added here */}
+            </div>
+            <div className="flex flex-col p-3 bg-gray-100 dark:bg-slate-900 w-full h-full rounded-lg overflow-y-hidden">
+                {chats ? (
+                    <div className="overflow-y-auto">
+                        {chats.map((chat) => {
+                             const otherUser = !chat.isGroupChat && loggedUser ? getSenderFull(loggedUser, chat.users) : null;
+                             return (
+                                <div
+                                    onClick={() => setSelectedChat(chat)}
+                                    className={`cursor-pointer px-3 py-2 rounded-lg mb-2 flex items-center space-x-3 ${selectedChat === chat ? 'bg-blue-500 text-white' : 'bg-gray-200 dark:bg-slate-700 text-black dark:text-white'}`}
+                                    key={chat._id}
+                                >
+                                    {chat.isGroupChat ? (
+                                        <div className="w-10 h-10 rounded-full bg-gray-400 flex items-center justify-center">
+                                             <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-white" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" /></svg>
+                                        </div>
+                                    ) : (
+                                        <img src={otherUser?.pic} alt={otherUser?.name} className="w-10 h-10 rounded-full object-cover" />
+                                    )}
+                                    <div className="flex-1 overflow-hidden">
+                                        <p className="font-semibold truncate">
+                                            {chat.isGroupChat ? chat.chatName : otherUser?.name}
+                                        </p>
+                                        {chat.latestMessage && (
+                                            <p className="text-xs truncate">
+                                                <b>{chat.latestMessage.sender.name === user?.name ? 'You' : chat.latestMessage.sender.name}: </b>
+                                                {chat.latestMessage.content.length > 50
+                                                    ? chat.latestMessage.content.substring(0, 51) + '...'
+                                                    : chat.latestMessage.content}
+                                            </p>
+                                        )}
+                                    </div>
+                                </div>
+                             )
+                        })}
+                    </div>
+                ) : (
+                    <div>Loading chats...</div>
+                )}
+            </div>
+        </div>
+    );
+};
+
+export default MyChats;
