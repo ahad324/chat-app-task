@@ -1,19 +1,23 @@
+
 import React, { useState } from 'react';
-import axios from 'axios';
+import axios, { AxiosError } from 'axios';
 import { useNavigate } from 'react-router-dom';
 
 const Login = () => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
     const navigate = useNavigate();
-    const serverUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+    const serverUrl = (import.meta as any).env.VITE_API_URL || 'http://localhost:3000';
 
     const submitHandler = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
+        setError('');
+
         if (!email || !password) {
-            alert('Please fill all the fields');
+            setError('Please fill all the fields');
             setLoading(false);
             return;
         }
@@ -26,18 +30,19 @@ const Login = () => {
             };
 
             const { data } = await axios.post(`${serverUrl}/api/user/login`, { email, password }, config);
-            alert('Login Successful');
             localStorage.setItem('userInfo', JSON.stringify(data));
             setLoading(false);
             navigate('/chats');
-        } catch (error) {
-            alert('Error Occurred!');
+        } catch (err) {
+            const axiosError = err as AxiosError<{ message: string }>;
+            setError(axiosError.response?.data?.message || 'An unexpected error occurred.');
             setLoading(false);
         }
     };
 
     return (
         <form onSubmit={submitHandler} className="flex flex-col space-y-4 pt-4">
+             {error && <div className="p-3 bg-red-200 text-red-800 rounded-md">{error}</div>}
             <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Email Address</label>
                 <input

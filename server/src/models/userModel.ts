@@ -1,3 +1,4 @@
+
 import mongoose, { Document, Model, Schema } from 'mongoose';
 import bcrypt from 'bcryptjs';
 
@@ -10,7 +11,7 @@ export interface IUser extends Document {
 }
 
 const userSchema: Schema<IUser> = new mongoose.Schema({
-    name: { type: String, required: true },
+    name: { type: String, required: true, unique: true },
     email: { type: String, required: true, unique: true },
     password: { type: String, required: true },
     pic: {
@@ -19,12 +20,13 @@ const userSchema: Schema<IUser> = new mongoose.Schema({
     }
 }, { timestamps: true });
 
-userSchema.methods.matchPassword = async function (enteredPassword: string) {
-    return await bcrypt.compare(enteredPassword, this.password!);
+userSchema.methods.matchPassword = async function (enteredPassword: string): Promise<boolean> {
+    if(!this.password) return false;
+    return await bcrypt.compare(enteredPassword, this.password);
 };
 
 userSchema.pre('save', async function (next) {
-    if (!this.isModified('password')) {
+    if (!this.isModified('password') || !this.password) {
         next();
     }
     const salt = await bcrypt.genSalt(10);

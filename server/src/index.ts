@@ -15,7 +15,8 @@ connectDB();
 const app = express();
 
 const corsOptions = {
-  origin: process.env.CLIENT_URL,
+  origin: process.env.CLIENT_URL?.split(','),
+  credentials:true
 };
 
 app.use(cors(corsOptions));
@@ -39,7 +40,8 @@ const server = app.listen(PORT, () => console.log(`Server started on PORT ${PORT
 const io = new Server(server, {
     pingTimeout: 60000,
     cors: {
-        origin: "http://localhost:5173",
+        origin: process.env.CLIENT_URL?.split(','),
+        credentials: true,
     }
 });
 

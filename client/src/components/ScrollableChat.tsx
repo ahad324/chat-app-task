@@ -21,7 +21,7 @@ const DotsVerticalIcon = () => (
 const MessageMenu = ({ onEdit, onDelete }: { onEdit: () => void; onDelete: () => void }) => (
     <Menu as="div" className="relative inline-block text-left">
         <div>
-            <Menu.Button className="flex items-center rounded-full text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-gray-100">
+            <Menu.Button className="flex items-center rounded-full text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-gray-100 dark:focus:ring-offset-slate-800">
                 <span className="sr-only">Open options</span>
                 <DotsVerticalIcon />
             </Menu.Button>
@@ -68,14 +68,15 @@ const ScrollableChat = ({ messages, onEdit, onDelete }: ScrollableChatProps) => 
             {(isSameSender(messages, m, i, user?._id || '') ||
               isLastMessage(messages, i, user?._id || '')) && (
                  <img
-                    className="w-8 h-8 rounded-full cursor-pointer mr-1"
+                    className="w-8 h-8 rounded-full cursor-pointer mr-1 self-end"
                     src={m.sender.pic}
                     alt={m.sender.name}
                  />
             )}
-             <div className={`flex items-center ${m.sender._id === user?._id ? 'ml-auto' : ''}`}>
+             <div className={`flex items-center ${m.sender._id === user?._id ? 'ml-auto' : ''} min-w-0`}>
                 <span
                 style={{
+                    display: 'inline-block',
                     backgroundColor: `${
                     m.sender._id === user?._id ? '#BEE3F8' : '#B9F5D0'
                     }`,
@@ -86,7 +87,7 @@ const ScrollableChat = ({ messages, onEdit, onDelete }: ScrollableChatProps) => 
                     maxWidth: '75%',
                     color: 'black'
                 }}
-                className="break-words"
+                className="break-all"
                 >
                 {m.isDeleted ? <i className="text-gray-500">This message was deleted</i> : m.content}
                 </span>

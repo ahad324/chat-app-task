@@ -1,5 +1,6 @@
+
 import React, { useState } from 'react';
-import axios from 'axios';
+import axios, { AxiosError } from 'axios';
 import { useNavigate } from 'react-router-dom';
 
 const Signup = () => {
@@ -9,8 +10,9 @@ const Signup = () => {
     const [password, setPassword] = useState('');
     const [pic, setPic] = useState<File | null>(null);
     const [loading, setLoading] = useState(false);
+    const [error, setError] = useState('');
     const navigate = useNavigate();
-    const serverUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+    const serverUrl = (import.meta as any).env.VITE_API_URL || 'http://localhost:3000';
 
     const handlePicChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files) {
@@ -21,13 +23,20 @@ const Signup = () => {
     const submitHandler = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
+        setError('');
+
         if (!name || !email || !password || !confirmpassword) {
-            alert('Please fill all the fields');
+            setError('Please fill all the fields');
             setLoading(false);
             return;
         }
         if (password !== confirmpassword) {
-            alert('Passwords do not match');
+            setError('Passwords do not match');
+            setLoading(false);
+            return;
+        }
+        if (password.length < 8) {
+            setError('Password must be at least 8 characters long');
             setLoading(false);
             return;
         }
@@ -47,19 +56,19 @@ const Signup = () => {
                 },
             };
             const { data } = await axios.post(`${serverUrl}/api/user`, formData, config);
-            alert('Registration Successful');
             localStorage.setItem('userInfo', JSON.stringify(data));
             setLoading(false);
             navigate('/chats');
-        } catch (error) {
-            alert('Error Occurred!');
-            console.error(error);
+        } catch (err) {
+             const axiosError = err as AxiosError<{ message: string }>;
+            setError(axiosError.response?.data?.message || 'An unexpected error occurred.');
             setLoading(false);
         }
     };
 
     return (
         <form onSubmit={submitHandler} className="flex flex-col space-y-4 pt-4">
+             {error && <div className="p-3 bg-red-200 text-red-800 rounded-md">{error}</div>}
             <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Name</label>
                 <input
@@ -106,7 +115,7 @@ const Signup = () => {
                     type="file"
                     accept="image/png, image/jpeg"
                     onChange={handlePicChange}
-                    className="mt-1 block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                    className="mt-1 block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 dark:file:bg-slate-600 file:text-blue-700 dark:file:text-blue-200 hover:file:bg-blue-100 dark:hover:file:bg-slate-500"
                 />
             </div>
             <button

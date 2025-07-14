@@ -1,16 +1,15 @@
 
-
-import { Request, Response } from 'express';
 import asyncHandler from 'express-async-handler';
 import User from '../models/userModel';
 import generateToken from '../utils/generateToken';
 import cloudinary from '../config/cloudinary';
 import sharp from 'sharp';
+import { Buffer } from 'buffer';
 
 const uploadToCloudinary = (buffer: Buffer): Promise<any> => {
     return new Promise((resolve, reject) => {
         const uploadStream = cloudinary.uploader.upload_stream(
-            { resource_type: 'image', folder: 'chat-app' },
+            { resource_type: 'image', folder: 'chat-app-profiles' },
             (error, result) => {
                 if (error) {
                     reject(error);
@@ -23,19 +22,29 @@ const uploadToCloudinary = (buffer: Buffer): Promise<any> => {
     });
 };
 
-const registerUser = asyncHandler(async (req: Request, res: Response) => {
+const registerUser = asyncHandler(async (req, res) => {
     const { name, email, password } = req.body;
 
     if (!name || !email || !password) {
         res.status(400);
-        throw new Error("Please Enter all the Fields");
+        throw new Error("Please enter all the fields");
     }
 
-    const userExists = await User.findOne({ email });
-
-    if (userExists) {
+    if (password.length < 8) {
         res.status(400);
-        throw new Error("User already exists");
+        throw new Error("Password must be at least 8 characters long");
+    }
+
+    const userExistsByEmail = await User.findOne({ email });
+    if (userExistsByEmail) {
+        res.status(400);
+        throw new Error("User with this email already exists");
+    }
+
+    const userExistsByName = await User.findOne({ name });
+    if (userExistsByName) {
+        res.status(400);
+        throw new Error("Username is already taken");
     }
 
     let picUrl: string | undefined;
@@ -52,7 +61,7 @@ const registerUser = asyncHandler(async (req: Request, res: Response) => {
             picUrl = result.secure_url;
         } catch (error: any) {
             console.error("Image upload failed:", error);
-            // Proceed without a picture if upload fails
+            // Proceed without a picture if upload fails but inform the user
         }
     }
 
@@ -60,7 +69,7 @@ const registerUser = asyncHandler(async (req: Request, res: Response) => {
         name,
         email,
         password,
-        pic: picUrl, // If picUrl is undefined, schema default will apply
+        pic: picUrl,
     });
 
     if (user) {
@@ -73,11 +82,11 @@ const registerUser = asyncHandler(async (req: Request, res: Response) => {
         });
     } else {
         res.status(400);
-        throw new Error("Failed to Create the User");
+        throw new Error("Failed to create the user");
     }
 });
 
-const authUser = asyncHandler(async (req: Request, res: Response) => {
+const authUser = asyncHandler(async (req, res) => {
     const { email, password } = req.body;
     const user = await User.findOne({ email });
 
@@ -95,7 +104,7 @@ const authUser = asyncHandler(async (req: Request, res: Response) => {
     }
 });
 
-const allUsers = asyncHandler(async (req: Request, res: Response) => {
+const allUsers = asyncHandler(async (req, res) => {
     const keyword = req.query.search ? {
         $or: [
             { name: { $regex: req.query.search as string, $options: "i" } },
@@ -107,5 +116,38 @@ const allUsers = asyncHandler(async (req: Request, res: Response) => {
     res.send(users);
 });
 
+const updateUserProfile = asyncHandler(async (req, res) => {
+    const user = await User.findById((req as any).user._id);
 
-export { registerUser, authUser, allUsers };
+    if (!user) {
+        res.status(404);
+        throw new Error("User not found");
+    }
+    
+    if ((req as any).file) {
+        try {
+            const processedBuffer = await sharp((req as any).file.buffer)
+                .resize(200, 200, { fit: 'cover' })
+                .toFormat('jpeg')
+                .jpeg({ quality: 90 })
+                .toBuffer();
+            
+            const result = await uploadToCloudinary(processedBuffer);
+            user.pic = result.secure_url;
+        } catch (error: any) {
+            res.status(500);
+            throw new Error("Image upload failed, please try again.");
+        }
+    }
+    
+    const updatedUser = await user.save();
+
+    res.json({
+        _id: updatedUser._id,
+        name: updatedUser.name,
+        email: updatedUser.email,
+        pic: updatedUser.pic,
+    });
+});
+
+export { registerUser, authUser, allUsers, updateUserProfile };
