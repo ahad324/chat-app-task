@@ -1,10 +1,11 @@
 
 import asyncHandler from 'express-async-handler';
-import User from '../models/userModel';
+import User, { IUser } from '../models/userModel';
 import generateToken from '../utils/generateToken';
 import cloudinary from '../config/cloudinary';
 import sharp from 'sharp';
 import { Buffer } from 'buffer';
+import { Request, Response } from 'express';
 
 const uploadToCloudinary = (buffer: Buffer): Promise<any> => {
     return new Promise((resolve, reject) => {
@@ -22,7 +23,7 @@ const uploadToCloudinary = (buffer: Buffer): Promise<any> => {
     });
 };
 
-const registerUser = asyncHandler(async (req, res) => {
+const registerUser = asyncHandler(async (req: Request, res: Response) => {
     const { name, email, password } = req.body;
 
     if (!name || !email || !password) {
@@ -78,7 +79,7 @@ const registerUser = asyncHandler(async (req, res) => {
             name: user.name,
             email: user.email,
             pic: user.pic,
-            token: generateToken(user._id.toString()),
+            token: generateToken((user._id as any).toString()),
         });
     } else {
         res.status(400);
@@ -86,7 +87,7 @@ const registerUser = asyncHandler(async (req, res) => {
     }
 });
 
-const authUser = asyncHandler(async (req, res) => {
+const authUser = asyncHandler(async (req: Request, res: Response) => {
     const { email, password } = req.body;
     const user = await User.findOne({ email });
 
@@ -96,7 +97,7 @@ const authUser = asyncHandler(async (req, res) => {
             name: user.name,
             email: user.email,
             pic: user.pic,
-            token: generateToken(user._id.toString()),
+            token: generateToken((user._id as any).toString()),
         });
     } else {
         res.status(401);
@@ -104,8 +105,13 @@ const authUser = asyncHandler(async (req, res) => {
     }
 });
 
-const allUsers = asyncHandler(async (req, res) => {
-    const query: any = { _id: { $ne: (req as any).user._id } };
+const allUsers = asyncHandler(async (req: Request, res: Response) => {
+    const user = req.user as IUser;
+    if (!user) {
+        res.status(401);
+        throw new Error("Not authorized");
+    }
+    const query: any = { _id: { $ne: user._id } };
     const searchKeyword = req.query.search as string;
 
     if (searchKeyword && searchKeyword.trim() !== '') {
@@ -119,10 +125,15 @@ const allUsers = asyncHandler(async (req, res) => {
     res.send(users);
 });
 
-const updateUserProfile = asyncHandler(async (req, res) => {
-    const user = await User.findById((req as any).user._id);
-
+const updateUserProfile = asyncHandler(async (req: Request, res: Response) => {
+    const user = req.user as IUser;
     if (!user) {
+        res.status(401);
+        throw new Error("Not authorized");
+    }
+    const userToUpdate = await User.findById(user._id);
+
+    if (!userToUpdate) {
         res.status(404);
         throw new Error("User not found");
     }
@@ -136,14 +147,14 @@ const updateUserProfile = asyncHandler(async (req, res) => {
                 .toBuffer();
             
             const result = await uploadToCloudinary(processedBuffer);
-            user.pic = result.secure_url;
+            userToUpdate.pic = result.secure_url;
         } catch (error: any) {
             res.status(500);
             throw new Error("Image upload failed, please try again.");
         }
     }
     
-    const updatedUser = await user.save();
+    const updatedUser = await userToUpdate.save();
 
     res.json({
         _id: updatedUser._id,

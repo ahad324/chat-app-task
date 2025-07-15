@@ -64,14 +64,14 @@ const ScrollableChat = ({ messages, onEdit, onDelete }: ScrollableChatProps) => 
       {messages &&
         messages.map((m, i) => (
           <div style={{ display: 'flex' }} key={m._id} className="group items-end my-1">
-            {(isSameSender(messages, m, i, user?._id || '') ||
+            {/* {(isSameSender(messages, m, i, user?._id || '') ||
               isLastMessage(messages, i, user?._id || '')) && (
                  <img
                     className="w-8 h-8 rounded-full cursor-pointer mr-1 self-end"
                     src={m.sender.pic}
                     alt={m.sender.name}
                  />
-            )}
+            )} */}
              <div className={`flex items-center ${m.sender._id === user?._id ? 'ml-auto' : ''} min-w-0`}>
                 <span
                     style={{
