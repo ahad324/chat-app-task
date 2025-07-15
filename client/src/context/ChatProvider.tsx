@@ -6,7 +6,7 @@ import Spinner from '../components/miscellaneous/Spinner';
 
 const ENDPOINT = (import.meta as any).env.VITE_API_URL || 'http://localhost:3000';
 
-interface ChatContextType {
+export interface ChatContextType {
     user: User | null;
     setUser: (user: User | null) => void;
     selectedChat: Chat | null;
@@ -20,6 +20,7 @@ interface ChatContextType {
 }
 
 const ChatContext = createContext<ChatContextType | undefined>(undefined);
+export { ChatContext };
 
 const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const [user, setUser] = useState<User | null>(null);
@@ -74,17 +75,17 @@ const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => 
                         const newChatWithLatestMessage = { ...newMessageRecieved.chat, latestMessage: newMessageRecieved };
                         updatedChats = [newChatWithLatestMessage, ...prevChats];
                     }
-                     return updatedChats.sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
+                    return updatedChats.sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
                 });
 
                 if (selectedChat?._id !== newMessageRecieved.chat._id) {
-                     if (!notification.some(n => n._id === newMessageRecieved._id)) {
+                    if (!notification.some(n => n._id === newMessageRecieved._id)) {
                         setNotification(prev => [newMessageRecieved, ...prev]);
                     }
                 }
             });
-            
-             newSocket.on('message updated', (updatedMessage: Message) => {
+
+            newSocket.on('message updated', (updatedMessage: Message) => {
                 setLatestMessage(updatedMessage);
                 setChats(prevChats =>
                     prevChats.map(chat => {
@@ -101,7 +102,7 @@ const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => 
             };
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [user]); 
+    }, [user]);
 
     if (authLoading) {
         return (
