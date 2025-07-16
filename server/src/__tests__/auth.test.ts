@@ -6,6 +6,9 @@ import userRoutes from '../routes/userRoutes';
 import { errorHandler } from '../middleware/errorMiddleware';
 import User from '../models/userModel';
 
+// Mock environment variables
+process.env.JWT_SECRET = 'test_jwt_secret';
+
 jest.mock('cloudinary', () => ({
   v2: {
     uploader: {
