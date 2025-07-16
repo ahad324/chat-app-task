@@ -9,9 +9,6 @@ import Message from '../models/messageModel';
 import { errorHandler } from '../middleware/errorMiddleware';
 import messageRoutes from '../routes/messageRoutes';
 
-// Mock environment variables
-process.env.JWT_SECRET = 'test_jwt_secret';
-
 jest.mock('../middleware/authMiddleware', () => ({
   protect: jest.fn((req: Request, res: Response, next: NextFunction) => {
     req.user = {

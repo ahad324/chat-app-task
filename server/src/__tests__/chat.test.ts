@@ -8,9 +8,6 @@ import Chat from '../models/chatModel';
 import { errorHandler } from '../middleware/errorMiddleware';
 import chatRoutes from '../routes/chatRoutes';
 
-// Mock environment variables
-process.env.JWT_SECRET = 'test_jwt_secret';
-
 jest.mock('../middleware/authMiddleware', () => ({
   protect: jest.fn((req: Request, res: Response, next: NextFunction) => {
     req.user = {
