@@ -164,4 +164,4 @@ const updateUserProfile = asyncHandler(async (req: Request, res: Response) => {
     });
 });
 
-export { registerUser, authUser, allUsers, updateUserProfile };
+export { registerUser, authUser, allUsers, updateUserProfile, uploadToCloudinary };
