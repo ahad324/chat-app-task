@@ -15,10 +15,7 @@ const mockMessages: Message[] = [
     sender: { _id: 'user1', name: 'John Doe', email: 'john@example.com', pic: 'url' },
     chat: {
       _id: 'chat1',
-      chatName: 'Test Chat',
       users: [],
-      isGroupChat: false,
-      groupAdmin: undefined,
       latestMessage: undefined,
     },
     isDeleted: false,
@@ -29,7 +26,7 @@ const mockMessages: Message[] = [
     sender: { _id: 'user2', name: 'Jane Doe', email: 'jane@example.com', pic: 'url' },
     chat: {
       _id: 'chat1',
-      chatName: 'Test Chat',
+
       users: [],
       isGroupChat: false,
       groupAdmin: undefined,

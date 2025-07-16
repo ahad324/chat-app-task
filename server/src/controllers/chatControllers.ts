@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import asyncHandler from 'express-async-handler';
-import Chat, { IChat } from '../models/chatModel';
+import Chat from '../models/chatModel';
 import User, { IUser } from '../models/userModel';
 
 const accessChat = asyncHandler(async (req: Request, res: Response) => {
@@ -57,10 +57,10 @@ const fetchChats = asyncHandler(async (req: Request, res: Response) => {
       .populate('latestMessage')
       .sort({ updatedAt: -1 });
 
-    const populatedResults = (await User.populate(results, {
+    const populatedResults = await User.populate(results, {
       path: 'latestMessage.sender',
       select: 'name pic email',
-    })) as IChat[];
+    });
     res.status(200).send(populatedResults);
   } catch (error) {
     res.status(400);

@@ -94,7 +94,9 @@ const SingleChat = () => {
       if (selectedChat?._id === deletedMessage.chat._id) {
         setMessages((prev) => {
           const updatedMessages = prev.filter((msg) => msg._id !== deletedMessage._id);
-          return [...updatedMessages, deletedMessage].sort((a, b) => new Date(a.updatedAt).getTime() - new Date(b.updatedAt).getTime());
+          return [...updatedMessages, deletedMessage].sort(
+            (a, b) => new Date(a.updatedAt).getTime() - new Date(b.updatedAt).getTime(),
+          );
         });
       }
       updateAndSortChats(deletedMessage);
@@ -147,11 +149,7 @@ const SingleChat = () => {
     setIsSending(true);
     try {
       const config = { headers: { 'Content-type': 'application/json', Authorization: `Bearer ${user?.token}` } };
-      await axios.put<Message>(
-        `${ENDPOINT}/api/message/${editingMessage._id}`,
-        { content: newMessage },
-        config,
-      );
+      await axios.put<Message>(`${ENDPOINT}/api/message/${editingMessage._id}`, { content: newMessage }, config);
       // The server will emit the 'message updated' event to the room
       handleCancelEdit();
     } catch (error) {
@@ -221,7 +219,7 @@ const SingleChat = () => {
     }, timerLength);
   };
 
-  const otherUser = selectedChat ? getSenderFull(user, selectedChat.users) : null;
+  const otherUser = selectedChat && user ? getSenderFull(user, selectedChat.users) : null;
 
   return (
     <>

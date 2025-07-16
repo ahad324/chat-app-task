@@ -17,6 +17,7 @@ export interface Message {
 
 export interface Chat {
   _id: string;
+  chatName: string;
   users: User[];
   latestMessage?: Message;
   updatedAt: string;

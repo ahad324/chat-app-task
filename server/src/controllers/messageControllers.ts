@@ -8,8 +8,8 @@ const sendMessage = asyncHandler(async (req: Request, res: Response) => {
   const { content, chatId } = req.body;
   if (!content || !chatId) {
     console.log('Invalid data passed into request');
-    res.sendStatus(400);
-    return;
+    res.status(400);
+    throw new Error('Invalid data passed into request');
   }
 
   const newMessage = {
@@ -54,43 +54,45 @@ const updateMessage = asyncHandler(async (req: Request, res: Response) => {
   const { messageId } = req.params;
   const { content } = req.body;
 
-  try {
-    const message = await Message.findById(messageId).populate('chat');
-
-    if (!message) {
-      res.status(404);
-      throw new Error('Message not found');
-    }
-
-    if (message.sender.toString() !== (req as any).user._id.toString()) {
-      res.status(403);
-      throw new Error('User not authorized to edit this message');
-    }
-
-    if (message.isDeleted) {
-      res.status(400);
-      throw new Error('Cannot edit a deleted message');
-    }
-
-    message.content = content;
-
-    let updatedMessage: any = await message.save();
-
-    updatedMessage = await updatedMessage.populate('sender', 'name pic');
-    updatedMessage = await updatedMessage.populate('chat');
-    updatedMessage = await User.populate(updatedMessage, {
-      path: 'chat.users',
-      select: 'name pic email',
-    });
-
-    // Emit the updated message to the chat room
-    (req as any).io.to(updatedMessage.chat._id.toString()).emit('message updated', updatedMessage);
-
-    res.json(updatedMessage);
-  } catch (error: any) {
+  if (!content) {
     res.status(400);
-    throw new Error((error as Error).message);
+    throw new Error('Content is required');
   }
+
+  const message = await Message.findById(messageId).populate('chat');
+
+  if (!message) {
+    res.status(404);
+    throw new Error('Message not found');
+  }
+
+  if (message.sender.toString() !== (req as any).user._id.toString()) {
+    res.status(403);
+    throw new Error('User not authorized to edit this message');
+  }
+
+  if (message.isDeleted) {
+    res.status(400);
+    throw new Error('Cannot edit a deleted message');
+  }
+
+  message.content = content;
+
+  let updatedMessage: any = await message.save();
+
+  updatedMessage = await updatedMessage.populate('sender', 'name pic');
+  updatedMessage = await updatedMessage.populate('chat');
+  updatedMessage = await User.populate(updatedMessage, {
+    path: 'chat.users',
+    select: 'name pic email',
+  });
+
+  // Emit the updated message to the chat room
+  if ((req as any).io && updatedMessage.chat && updatedMessage.chat._id) {
+    (req as any).io.to(updatedMessage.chat._id.toString()).emit('message updated', updatedMessage);
+  }
+
+  res.json(updatedMessage);
 });
 
 const deleteMessage = asyncHandler(async (req: Request, res: Response) => {

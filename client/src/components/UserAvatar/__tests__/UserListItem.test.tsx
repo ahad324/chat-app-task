@@ -23,8 +23,10 @@ describe('UserListItem Component', () => {
     const handleClick = vi.fn();
     render(<UserListItem user={mockUser} handleFunction={handleClick} />);
 
-    const item = screen.getByText('John Doe').parentElement.parentElement;
-    fireEvent.click(item);
+    const item = screen.getByText('John Doe').parentElement?.parentElement;
+    if (item) {
+      fireEvent.click(item);
+    }
 
     expect(handleClick).toHaveBeenCalledTimes(1);
   });

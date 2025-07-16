@@ -24,6 +24,7 @@ export const mockOtherUser: User = {
 // Mock chat data
 export const mockChat: Chat = {
   _id: 'chat1',
+  chatName: 'Test Chat',
   users: [mockUser, mockOtherUser],
   latestMessage: undefined,
   updatedAt: new Date().toISOString(),

@@ -6,11 +6,19 @@ const mockUser1: User = { _id: '1', name: 'User One', email: 'user1@test.com', p
 const mockUser2: User = { _id: '2', name: 'User Two', email: 'user2@test.com', pic: '' };
 const mockUsers: User[] = [mockUser1, mockUser2];
 
+const mockChat = {
+  _id: 'chat1',
+  chatName: 'Test Chat',
+  users: mockUsers,
+  updatedAt: new Date().toISOString(),
+};
+
 const createMockMessage = (sender: User, content: string): Message => ({
   _id: Math.random().toString(),
   sender,
   content,
-  chat: { _id: 'chat1', chatName: 'Test Chat', users: [], isGroupChat: false },
+  chat: mockChat,
+  updatedAt: new Date().toISOString(),
 });
 
 describe('Chat Logics', () => {

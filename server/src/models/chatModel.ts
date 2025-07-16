@@ -1,7 +1,8 @@
 import mongoose, { Document, Model, Schema } from 'mongoose';
+import { IUser } from './userModel'; // Import IUser
 
 export interface IChat extends Document {
-  users: mongoose.Types.ObjectId[];
+  users: mongoose.Types.ObjectId[] | IUser[];
   latestMessage?: mongoose.Types.ObjectId;
 }
 
