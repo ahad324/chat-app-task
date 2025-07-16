@@ -1,4 +1,3 @@
-
 import express from 'express';
 import { registerUser, authUser, allUsers, updateUserProfile } from '../controllers/userControllers';
 import { protect } from '../middleware/authMiddleware';

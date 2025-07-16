@@ -1,54 +1,50 @@
-import { Request, Response } from "express";
-import asyncHandler from "express-async-handler";
-import Chat from "../models/chatModel";
-import User, { IUser } from "../models/userModel";
+import { Request, Response } from 'express';
+import asyncHandler from 'express-async-handler';
+import Chat, { IChat } from '../models/chatModel';
+import User, { IUser } from '../models/userModel';
 
 const accessChat = asyncHandler(async (req: Request, res: Response) => {
   const user = req.user as IUser;
   if (!user) {
-    res.status(401).send("Unauthorized");
+    res.status(401).send('Unauthorized');
     return;
   }
-  
 
   const { userId } = req.body;
   if (!userId) {
-    console.log("UserId param not sent with request");
+    console.log('UserId param not sent with request');
     res.sendStatus(400);
     return;
   }
 
-  let isChat: any = await Chat.find({
-    $and: [
-      { users: { $elemMatch: { $eq: user._id } } },
-      { users: { $elemMatch: { $eq: userId } } },
-    ],
+  const isChat = await Chat.find({
+    $and: [{ users: { $elemMatch: { $eq: user._id } } }, { users: { $elemMatch: { $eq: userId } } }],
   })
-    .populate("users", "-password")
-    .populate("latestMessage");
+    .populate('users', '-password')
+    .populate('latestMessage');
 
-  isChat = await User.populate(isChat, {
-    path: "latestMessage.sender",
-    select: "name pic email",
+  const populatedChat = await User.populate(isChat, {
+    path: 'latestMessage.sender',
+    select: 'name pic email',
   });
 
-  if (isChat.length > 0) {
-    res.send(isChat[0]);
+  if (populatedChat.length > 0) {
+    res.send(populatedChat[0]);
   } else {
-    let chatData = {
+    const chatData = {
       users: [user._id, userId],
     };
 
     try {
       const createdChat = await Chat.create(chatData);
-      const FullChat = await Chat.findOne({ _id: createdChat._id }).populate(
-        "users",
-        "-password"
-      );
+      const FullChat = await Chat.findOne({ _id: createdChat._id }).populate('users', '-password');
       res.status(200).send(FullChat);
-    } catch (error: any) {
+    } catch (error) {
       res.status(400);
-      throw new Error((error as Error).message);
+      if (error instanceof Error) {
+        throw new Error(error.message);
+      }
+      throw new Error('Failed to create chat');
     }
   }
 });
@@ -56,20 +52,22 @@ const accessChat = asyncHandler(async (req: Request, res: Response) => {
 const fetchChats = asyncHandler(async (req: Request, res: Response) => {
   const user = req.user as IUser;
   try {
-    Chat.find({ users: { $elemMatch: { $eq: user._id } } })
-      .populate("users", "-password")
-      .populate("latestMessage")
-      .sort({ updatedAt: -1 })
-      .then(async (results) => {
-        results = (await User.populate(results, {
-          path: "latestMessage.sender",
-          select: "name pic email",
-        })) as any;
-        res.status(200).send(results);
-      });
-  } catch (error: any) {
+    const results = await Chat.find({ users: { $elemMatch: { $eq: user._id } } })
+      .populate('users', '-password')
+      .populate('latestMessage')
+      .sort({ updatedAt: -1 });
+
+    const populatedResults = (await User.populate(results, {
+      path: 'latestMessage.sender',
+      select: 'name pic email',
+    })) as IChat[];
+    res.status(200).send(populatedResults);
+  } catch (error) {
     res.status(400);
-    throw new Error((error as Error).message);
+    if (error instanceof Error) {
+      throw new Error(error.message);
+    }
+    throw new Error('Failed to fetch chats');
   }
 });
 

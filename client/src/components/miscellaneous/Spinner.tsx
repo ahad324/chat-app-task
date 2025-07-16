@@ -1,18 +1,15 @@
-import React from "react";
+import React from 'react';
 
 interface SpinnerProps {
-  size?: "sm" | "md" | "lg";
+  size?: 'sm' | 'md' | 'lg';
   color?: string;
 }
 
-const Spinner: React.FC<SpinnerProps> = ({
-  size = "md",
-  color = "text-blue-500",
-}) => {
+const Spinner: React.FC<SpinnerProps> = ({ size = 'md', color = 'text-blue-500' }) => {
   const sizeClasses = {
-    sm: "h-5 w-5",
-    md: "h-8 w-8",
-    lg: "h-16 w-16",
+    sm: 'h-5 w-5',
+    md: 'h-8 w-8',
+    lg: 'h-16 w-16',
   };
 
   return (

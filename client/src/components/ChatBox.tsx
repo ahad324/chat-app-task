@@ -1,5 +1,5 @@
-import { ChatState } from "../context/ChatProvider";
-import SingleChat from "./SingleChat";
+import { ChatState } from '../context/ChatProvider';
+import SingleChat from './SingleChat';
 
 const ChatBox = () => {
   const { selectedChat } = ChatState();
@@ -12,9 +12,7 @@ const ChatBox = () => {
         <SingleChat />
       ) : (
         <div className="flex items-center justify-center h-full">
-          <p className="text-2xl pb-3 font-work-sans text-gray-500">
-            Click on a user to start chatting
-          </p>
+          <p className="text-2xl pb-3 font-work-sans text-gray-500">Click on a user to start chatting</p>
         </div>
       )}
     </div>

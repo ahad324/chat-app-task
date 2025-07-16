@@ -25,7 +25,7 @@ describe('App Routing', () => {
     render(
       <MemoryRouter initialEntries={['/']}>
         <App />
-      </MemoryRouter>
+      </MemoryRouter>,
     );
     expect(screen.getByText('Home Page Mock')).toBeInTheDocument();
     // Check if the mock was called
@@ -37,7 +37,7 @@ describe('App Routing', () => {
     render(
       <MemoryRouter initialEntries={['/chats']}>
         <App />
-      </MemoryRouter>
+      </MemoryRouter>,
     );
     expect(screen.getByText('Chat Page Mock')).toBeInTheDocument();
     // Check if the mock was called
