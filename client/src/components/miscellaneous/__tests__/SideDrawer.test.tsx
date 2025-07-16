@@ -1,55 +1,86 @@
-
-import { render, screen, fireEvent } from '@testing-library/react';
-import { describe, it, expect, vi } from 'vitest';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import axios from 'axios';
 import SideDrawer from '../SideDrawer';
-import { ChatState } from '../../../context/ChatProvider';
-import { MemoryRouter } from 'react-router-dom';
+import { renderWithProviders, mockUser, mockOtherUser } from '../../../tests/mocks';
 
-vi.mock('../../../context/ChatProvider', () => ({
-    ChatState: vi.fn(),
-}));
+vi.mock('axios');
+const mockedAxios = axios as vi.Mocked<typeof axios>;
 
-const mockUser = {
-    _id: 'user1',
-    name: 'Test User',
-    email: 'test@example.com',
-    pic: 'url',
-    token: 'fake-token',
-};
+const mockNavigate = vi.fn();
+vi.mock('react-router-dom', async () => {
+    const actual = await vi.importActual('react-router-dom');
+    return {
+        ...actual,
+        useNavigate: () => mockNavigate,
+    };
+});
 
 describe('SideDrawer Component', () => {
+    const setSelectedChatMock = vi.fn();
+    const setChatsMock = vi.fn();
+
     beforeEach(() => {
-        (ChatState as vi.Mock).mockReturnValue({
-            user: mockUser,
-            setSelectedChat: vi.fn(),
-            chats: [],
-            setChats: vi.fn(),
+        vi.clearAllMocks();
+        renderWithProviders(<SideDrawer />, {
+            providerProps: {
+                setSelectedChat: setSelectedChatMock,
+                setChats: setChatsMock,
+                chats: [],
+            },
         });
     });
 
-    it('toggles the drawer visibility on search button click', () => {
-        render(
-            <MemoryRouter>
-                <SideDrawer />
-            </MemoryRouter>
-        );
-
-        const drawerContainer = screen.getByText('Search Users').parentElement;
-
-        // Drawer should be closed initially
-        expect(drawerContainer).toHaveClass('-translate-x-full');
-
-        // Click the search button
+    const openDrawer = () => {
         fireEvent.click(screen.getByRole('button', { name: /search user/i }));
+    };
 
-        // Drawer should be open
-        expect(drawerContainer).toHaveClass('translate-x-0');
-        expect(drawerContainer).not.toHaveClass('-translate-x-full');
-
-        // Click the close button
-        fireEvent.click(screen.getByRole('button', { name: /close menu/i }));
-
-        // Drawer should be closed again
+    it('toggles the drawer visibility', () => {
+        const drawerContainer = screen.getByText('Search Users').parentElement;
         expect(drawerContainer).toHaveClass('-translate-x-full');
+        openDrawer();
+        expect(drawerContainer).toHaveClass('translate-x-0');
+        fireEvent.click(screen.getByRole('button', { name: /close menu/i }));
+        expect(drawerContainer).toHaveClass('-translate-x-full');
+    });
+
+    it('handles user search and displays results', async () => {
+        mockedAxios.get.mockResolvedValue({ data: [mockOtherUser] });
+        openDrawer();
+        
+        const searchInput = screen.getByPlaceholderText(/search by name or email/i);
+        const searchButton = screen.getByRole('button', { name: 'Go' });
+
+        fireEvent.change(searchInput, { target: { value: 'Other' } });
+        fireEvent.click(searchButton);
+
+        await waitFor(() => {
+            expect(mockedAxios.get).toHaveBeenCalledWith(expect.stringContaining('/api/user?search=Other'), expect.any(Object));
+            expect(screen.getByText(mockOtherUser.name)).toBeInTheDocument();
+        });
+    });
+
+    it('handles accessing a chat with a user from search results', async () => {
+        const newChat = { _id: 'chat2', users: [mockUser, mockOtherUser] };
+        mockedAxios.get.mockResolvedValue({ data: [mockOtherUser] });
+        mockedAxios.post.mockResolvedValue({ data: newChat });
+        openDrawer();
+
+        fireEvent.change(screen.getByPlaceholderText(/search by name or email/i), { target: { value: 'Other' } });
+        fireEvent.click(screen.getByRole('button', { name: 'Go' }));
+
+        const userItem = await screen.findByText(mockOtherUser.name);
+        fireEvent.click(userItem);
+
+        await waitFor(() => {
+            expect(mockedAxios.post).toHaveBeenCalledWith(expect.stringContaining('/api/chat'), { userId: mockOtherUser._id }, expect.any(Object));
+            expect(setSelectedChatMock).toHaveBeenCalledWith(newChat);
+            expect(setChatsMock).toHaveBeenCalled();
+        });
+    });
+
+    it('logs out the user', () => {
+        fireEvent.click(screen.getByRole('button', { name: /logout/i }));
+        expect(mockNavigate).toHaveBeenCalledWith('/');
     });
 });

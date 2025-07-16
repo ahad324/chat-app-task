@@ -20,8 +20,7 @@ export const isSameSender = (messages: Message[], m: Message, i: number, userId:
 export const isLastMessage = (messages: Message[], i: number, userId: string) => {
     return (
         i === messages.length - 1 &&
-        messages[messages.length - 1].sender._id !== userId &&
-        messages[messages.length - 1].sender._id
+        messages[messages.length - 1].sender._id !== userId
     );
 };
 
